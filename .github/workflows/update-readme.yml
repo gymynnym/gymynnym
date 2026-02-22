@@ -1,0 +1,30 @@
+name: Update latest posts in README
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 'stable'
+
+      - run: go install github.com/gymynnym/feed2readme/cmd/feed2readme@latest
+      - run: feed2readme -c feed2readme.toml -m README.md -l 5
+
+      - name: git commit
+        run: |
+          git config --local user.email "gymynnym@users.noreply.github.com"
+          git config --local user.name "gymynnym"
+          git add README.md
+          git diff --cached --quiet || (git commit -m "docs: update latest posts" && git push origin HEAD:${GITHUB_REF_NAME})
+
